@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import "ol/ol.css";
 import { Map, View } from "ol";
 import TileLayer from "ol/layer/Tile";
@@ -21,22 +22,23 @@ import FloatingButton from "./EmbedFloatingButton";
 import LayerGroup from "ol/layer/Group";
 
 import Typography from "@mui/material/Typography";
-import MyLocationOutlinedIcon from '@mui/icons-material/MyLocationOutlined';
+import MyLocationOutlinedIcon from "@mui/icons-material/MyLocationOutlined";
 import Slider from "@mui/material/Slider";
 
-
 const MapComponent = () => {
-  const centerMap = [118.0149, -2.5489];
-  const zoomLevel = 15;
   const bingApiKey =
     "Asz37fJVIXH4CpaK90Ohf9bPbV39RCX1IQ1LP4fMm4iaDN5gD5USHfqmgdFY5BrA";
+  const [searchParams] = useSearchParams();
 
   const [map, setMap] = useState(null);
+  const [lat, setLat] = useState(Number(searchParams.get("lat")));
+  const [lon, setLot] = useState(Number(searchParams.get("lon")));
+  const [faskes, setFaskes] = useState(searchParams.get("faskes"));
   const [showFloatingButton, setShowFloatingButton] = useState(false);
   const [userMarker, setUserMarker] = useState(null);
   const [marker, setMarker] = useState(null);
   const [userLocation, setUserLocation] = useState([0, 0]);
-  const [markerPosition, setMarkerPosition] = useState(centerMap);
+  const [markerPosition, setMarkerPosition] = useState([lon, lat]); // Move centerMap declaration here
   const [selectedBasemap, setSelectedBasemap] = useState("map-switch-default");
   const [showPotentialLayer, setShowPotentialLayer] = useState(false);
   const [userMarkerFeature, setUserMarkerFeature] = useState(null);
@@ -45,6 +47,8 @@ const MapComponent = () => {
   const [markerLayer, setMarkerLayer] = useState(null);
   const [potentialLayerOpacity, setPotentialLayerOpacity] = useState(0.7);
 
+  const centerMap = [lon, lat]; // Move this line above its usage
+  const zoomLevel = 15;
 
   const handleLayerSelectClick = () => {
     setShowFloatingButton((prevState) => !prevState);
@@ -116,7 +120,7 @@ const MapComponent = () => {
       }
     }
   };
-  
+
   useEffect(() => {
     const map = new Map({
       target: "map",
@@ -157,12 +161,6 @@ const MapComponent = () => {
 
     setMap(map);
 
-    const potential = new TileLayer({
-      source: new XYZ({
-        url: "http://10.27.59.239/potential/{z}/{x}/{-y}.png",
-      }),
-    });
-
     const userMarkerSource = new VectorSource();
     const userMarkerLayer = new VectorLayer({
       source: userMarkerSource,
@@ -171,7 +169,6 @@ const MapComponent = () => {
 
     map.addLayer(userMarkerLayer);
 
-   
     const userMarkerFeature = new Feature({
       geometry: new Point(fromLonLat([0, 0])),
     });
@@ -219,11 +216,8 @@ const MapComponent = () => {
     setMarkerFeature(markerFeature);
     setMarkerSource(markerSource);
     setMarkerLayer(markerLayer);
-
-    const translate = new Translate({
-      features: new Collection([markerFeature]),
-    });
-    map.addInteraction(translate);
+    setMarkerPosition(centerMap);
+   
 
     const markerOverlay = new Overlay({
       element: document.getElementById("marker-overlay"),
@@ -246,22 +240,6 @@ const MapComponent = () => {
       setUserLocation(lonLat);
     });
 
-    markerFeature.on("change", () => {
-      const coordinates = markerFeature.getGeometry().getCoordinates();
-      const lonLat = toLonLat(coordinates);
-      markerOverlay.setPosition(coordinates);
-      setMarkerPosition(lonLat);
-
-      window.parent.postMessage(
-        {
-          type: "MarkerPosition",
-          latitude: lonLat[1],
-          longitude: lonLat[0],
-        },
-        "http://localhost:8000"
-      );
-    });
-
     // Get the device's current location and zoom to it
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition((position) => {
@@ -269,23 +247,23 @@ const MapComponent = () => {
         const coordinates = fromLonLat(lonLat);
 
         // Set the map's view to the device's location
-        map.getView().setCenter(coordinates);
-        map.getView().setZoom(zoomLevel); // Adjust the zoom level as needed
+        //map.getView().setCenter(centerMap);
+        //map.getView().setZoom(zoomLevel); // Adjust the zoom level as needed
 
         // Set the user's marker's position to the device's location
         userMarkerFeature.getGeometry().setCoordinates(coordinates);
 
         // Set the marker's position to the device's location
-        markerFeature.getGeometry().setCoordinates(coordinates);
+        //  markerFeature.getGeometry().setCoordinates(coordinates);
 
         // Update the user marker position state
         setUserLocation(lonLat);
         // Update the marker position state
-        setMarkerPosition(lonLat);
+        //setMarkerPosition(lonLat);
       });
     }
     return () => {
-      map.removeInteraction(translate);
+     
     };
   }, []);
 
@@ -301,13 +279,11 @@ const MapComponent = () => {
           zoom: zoomLevel,
         });
 
-
-
         userMarkerFeature.getGeometry().setCoordinates(coordinates);
-        markerFeature.getGeometry().setCoordinates(coordinates);
+        //markerFeature.getGeometry().setCoordinates(coordinates);
 
         setUserLocation(lonLat);
-        setMarkerPosition(lonLat);
+        //setMarkerPosition(lonLat);
       });
     }
   };
@@ -316,8 +292,11 @@ const MapComponent = () => {
     <Box className="contentRoot">
       <div id="map" className="map"></div>
       {/* Center Geolocation Button */}
-      <button onClick={handleCenterGeolocation} className="center-geolocation-button">
-        <MyLocationOutlinedIcon className="img"/>
+      <button
+        onClick={handleCenterGeolocation}
+        className="center-geolocation-button"
+      >
+        <MyLocationOutlinedIcon className="img" />
       </button>
       <div
         className="layer-select-embed"
@@ -325,26 +304,24 @@ const MapComponent = () => {
         onClick={handleLayerSelectClick}
       ></div>
 
-<div className="basemap-select hidden">
+      <div className="basemap-select hidden">
         <FloatingButton
           basemapOptions={basemapOptions}
           basemap={selectedBasemap}
           changeBasemap={changeBasemap}
           potentialLayerOpacity={potentialLayerOpacity} // Pass potentialLayerOpacity
           handlePotentialLayerOpacityChange={handlePotentialLayerOpacityChange} // Pass handlePotentialLayerOpacityChange
+          faskesType={faskes}
         />
-    </div>
+      </div>
       <div className="coordinate-box-embed">
         <p className="label">
           Latitude: {markerPosition[1].toFixed(6)}, Longitude:{" "}
           {markerPosition[0].toFixed(6)} | User Latitude:{" "}
           {userLocation[1].toFixed(6)}, User Longitude:{" "}
-          {userLocation[0].toFixed(6)}
+          {userLocation[0].toFixed(6)} 
         </p>
-
       </div>
-
-     
     </Box>
   );
 };

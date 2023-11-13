@@ -8,11 +8,12 @@ const FloatingButton = ({
   changeBasemap,
   potentialLayerOpacity,
   handlePotentialLayerOpacityChange,
+  faskesType
 }) => {
   return (
     <div className="embed-floating-button">
       <Typography id="opacity-slider-label" fontSize={12}>
-        Peta Potensi : 
+        Peta Potensi {faskesType.toUpperCase()}: 
       </Typography>{" "}
       <div className="opacity-slider">
       <Slider

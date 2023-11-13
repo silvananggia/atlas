@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import "ol/ol.css";
 import { Map, View } from "ol";
 import TileLayer from "ol/layer/Tile";
@@ -26,25 +27,29 @@ import Slider from "@mui/material/Slider";
 
 
 const MapComponent = () => {
-  const centerMap = [118.0149, -2.5489];
-  const zoomLevel = 15;
+
   const bingApiKey =
     "Asz37fJVIXH4CpaK90Ohf9bPbV39RCX1IQ1LP4fMm4iaDN5gD5USHfqmgdFY5BrA";
+    const [searchParams] = useSearchParams();
 
-  const [map, setMap] = useState(null);
-  const [showFloatingButton, setShowFloatingButton] = useState(false);
-  const [userMarker, setUserMarker] = useState(null);
-  const [marker, setMarker] = useState(null);
-  const [userLocation, setUserLocation] = useState([0, 0]);
-  const [markerPosition, setMarkerPosition] = useState(centerMap);
-  const [selectedBasemap, setSelectedBasemap] = useState("map-switch-default");
-  const [showPotentialLayer, setShowPotentialLayer] = useState(false);
-  const [userMarkerFeature, setUserMarkerFeature] = useState(null);
-  const [markerFeature, setMarkerFeature] = useState(null);
-  const [markerSource, setMarkerSource] = useState(null);
-  const [markerLayer, setMarkerLayer] = useState(null);
-  const [potentialLayerOpacity, setPotentialLayerOpacity] = useState(0.7);
-
+    const [map, setMap] = useState(null);
+    const [lat, setLat] = useState(Number(searchParams.get("lat")));
+    const [lon, setLot] = useState(Number(searchParams.get("lon")));
+    const [showFloatingButton, setShowFloatingButton] = useState(false);
+    const [userMarker, setUserMarker] = useState(null);
+    const [marker, setMarker] = useState(null);
+    const [userLocation, setUserLocation] = useState([0, 0]);
+    const [markerPosition, setMarkerPosition] = useState([lon, lat]); // Move centerMap declaration here
+    const [selectedBasemap, setSelectedBasemap] = useState("map-switch-default");
+    const [showPotentialLayer, setShowPotentialLayer] = useState(false);
+    const [userMarkerFeature, setUserMarkerFeature] = useState(null);
+    const [markerFeature, setMarkerFeature] = useState(null);
+    const [markerSource, setMarkerSource] = useState(null);
+    const [markerLayer, setMarkerLayer] = useState(null);
+    const [potentialLayerOpacity, setPotentialLayerOpacity] = useState(0.7);
+    
+    const centerMap = [lon, lat]; // Move this line above its usage
+    const zoomLevel = 15;
 
   const handleLayerSelectClick = () => {
     setShowFloatingButton((prevState) => !prevState);
