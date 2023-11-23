@@ -87,6 +87,7 @@ const MapComponent = () => {
   const [selectedBasemap, setSelectedBasemap] = useState("map-switch-default");
   const [showPotentialLayer, setShowPotentialLayer] = useState(false);
   const [showUncoveredLayer, setShowUncoveredLayer] = useState(false);
+  const [showPotentialFkrtl, setShowPotentialFkrtl] = useState(false);
   const [additionalMarker, setAdditionalMarker] = useState(null);
   const [showDetailBox, setShowDetailBox] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -188,6 +189,43 @@ const MapComponent = () => {
 
       // Update the showUncoveredLayer state
       setShowUncoveredLayer((prevState) => !prevState);
+    }
+  };
+
+  const togglePotentialFkrtl = () => {
+    if (map) {
+      const overlayGroup = map
+        .getLayers()
+        .getArray()
+        .find((layer) => layer.get("title") === "Overlay");
+
+      const potentialFkrtl = overlayGroup
+        .getLayers()
+        .getArray()
+        .find((layer) => layer.get("title") === "PotentialLayer");
+
+      if (showPotentialFkrtl) {
+        // Remove the potential layer from the overlay group
+        overlayGroup.getLayers().remove(potentialFkrtl);
+      } else {
+        // Create a new TileLayer for the potential layer
+        const newPotentialFkrtl = new TileLayer({
+          source: new XYZ({
+            attributions: "",
+            minZoom: 2,
+            maxZoom: 10,
+            url: "potential_fkrtl/{z}/{x}/{-y}.png",
+            tileSize: [384, 384],
+          }),
+          title: "PotentialLayer",
+        });
+
+        // Add the potential layer to the overlay group
+        overlayGroup.getLayers().push(newPotentialFkrtl);
+      }
+
+      // Update the showPotentialLayer state
+      setShowPotentialFkrtl((prevState) => !prevState);
     }
   };
 
@@ -519,7 +557,7 @@ const MapComponent = () => {
         Titik FKTP
         <Divider>FKRTL</Divider>
         <div className="label">Fasilitas Kesehatan Rujukan Tingkat Lanjut </div>
-        <Switch />
+        <Switch checked={showPotentialFkrtl} onChange={togglePotentialFkrtl} />
         Peta Potensi FKRTL
         <br />
         <Switch />
